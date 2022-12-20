@@ -86,7 +86,7 @@ public class DateOpenChangestream {
 		    	System.err.println("Insert");
 		    	handleInsertDateOpen(next);
 		    }
-//		    cursor.close();
+		    cursor.close();
 		}
 	}
 	
