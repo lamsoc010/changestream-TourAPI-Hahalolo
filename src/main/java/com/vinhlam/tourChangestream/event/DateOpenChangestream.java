@@ -70,12 +70,11 @@ public class DateOpenChangestream {
                                 Arrays.asList("insert", "update", "delete"))));
 		MongoChangeStreamCursor<ChangeStreamDocument<DateOpen>> cursor = mongoCollection.watch().fullDocument(FullDocument.UPDATE_LOOKUP).cursor();
 		
-		if(cursor.hasNext()) {
+		while(cursor.hasNext()) { //Lưu ý đây phải để while nó mới chạy bắt nhiều lần được, còn không chạy được 1 làn thôi
 			ChangeStreamDocument<DateOpen> next = cursor.next();
 			System.err.println(next);
 			if(next.getOperationTypeString().equalsIgnoreCase("delete")) {
 		    	System.err.println("Đây là phương thức delete: " + next.getOperationTypeString());
-		    	
 		    }
 		    
 		    if(next.getOperationTypeString().equalsIgnoreCase("update")) {
@@ -86,7 +85,7 @@ public class DateOpenChangestream {
 		    	System.err.println("Insert");
 		    	handleInsertDateOpen(next);
 		    }
-		    cursor.close();
+//		    cursor.close();
 		}
 	}
 	
