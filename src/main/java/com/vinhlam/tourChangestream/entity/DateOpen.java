@@ -23,8 +23,7 @@ public class DateOpen {
 	@BsonId
 	private ObjectId id;
 	
-	@BsonProperty("tourId")
-	private ObjectId tourId;
+	private String tourId;
 	
 	
 	private Date dateAvailable;
