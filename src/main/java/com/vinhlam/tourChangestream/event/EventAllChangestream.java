@@ -34,6 +34,7 @@ import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.FullDocument;
+import com.mongodb.client.model.changestream.FullDocumentBeforeChange;
 import com.vinhlam.tourChangestream.entity.DateOpen;
 import com.vinhlam.tourChangestream.entity.PriceOpen;
 import com.vinhlam.tourChangestream.entity.PriceTour;
@@ -98,6 +99,7 @@ public class EventAllChangestream {
 			    
 			    if(next.getOperationTypeString().equalsIgnoreCase("update")) {
 			    	System.out.println("Lắng nghe sự kiện update của collection: " +  DATAOPEN_COLLECTION);
+			    	dateOpenEvent.handleUpdateDateOpen(next);
 			    }
 			    
 			    if(next.getOperationTypeString().equalsIgnoreCase("insert")) {
