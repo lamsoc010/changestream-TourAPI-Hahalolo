@@ -85,7 +85,7 @@ public class EventAllChangestream {
 		
 //		Lắng nghe luôn cả database đó, 
 //		Nhưng kết hợp với pipeline trỏ tới điều kiện chỉ lắng nghe trên những bảng và những phương thức được quy định thôi
-		MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = mongoDatabase.watch(pipeline).fullDocument(FullDocument.UPDATE_LOOKUP).cursor();
+		MongoChangeStreamCursor<ChangeStreamDocument<Document>> cursor = mongoDatabase.watch(pipeline).fullDocumentBeforeChange(FullDocumentBeforeChange.WHEN_AVAILABLE).fullDocument(FullDocument.UPDATE_LOOKUP).cursor();
 		
 		while(cursor.hasNext()) { //Lưu ý đây phải để while nó mới chạy bắt nhiều lần được, còn không chạy được 1 làn thôi
 			ChangeStreamDocument<Document> next = cursor.next();

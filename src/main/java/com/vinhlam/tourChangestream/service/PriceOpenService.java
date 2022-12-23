@@ -22,6 +22,7 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.InsertOneResult;
 import com.mongodb.internal.bulk.DeleteRequest;
 import com.vinhlam.tourChangestream.entity.DateOpen;
 import com.vinhlam.tourChangestream.entity.PriceOpen;
@@ -32,40 +33,38 @@ import com.vinhlam.tourChangestream.repository.PriceOpenRepository;
 public class PriceOpenService {
 
 	@Autowired
-	private MongoDatabase mongoDatabase;
-	
-	private MongoCollection<PriceOpen> priceOpenCollection;
-	
-	@Autowired
 	private PriceOpenRepository priceOpenRepository;
+
 	
-	@Autowired
-	public void DateOpenService() {
-		CodecRegistry cRegistry = CodecRegistries.fromRegistries(MongoClientSettings.getDefaultCodecRegistry(), 
-				CodecRegistries.fromProviders(PojoCodecProvider.builder().automatic(true).build()));
-
-		priceOpenCollection = mongoDatabase.getCollection("priceOpen", PriceOpen.class).withCodecRegistry(cRegistry);
-	}
-
 	public boolean deletePriceOpenByTourIdAndDateOpen(String tourId, Date date) throws ParseException {
 
-		Bson match = new Document("tourId", tourId).append("dateOpen", date);
-		DeleteResult dr = priceOpenCollection.deleteOne(match);
-		
-		if(dr.getDeletedCount() != 0) {
-			return true; //Xoá thành công
-		} else {
-			return false; //Xoá thất bại
+		try {
+			DeleteResult dr = priceOpenRepository.deletePriceOpenByTourIdAndDateOpen(tourId, date);
+			
+			if(dr.getDeletedCount() != 0) {
+				return true; //Xoá thành công
+			} else {
+				return false; //Xoá thất bại
+			}
+		} catch (Exception e) {
+			return false; //Lỗi
 		}
+		
 	}
 	
 	
 	public boolean insertPriceOpen(PriceOpen priceOpen) {
-		PriceOpen priceOpenResult = priceOpenRepository.save(priceOpen);
-		if(priceOpenResult == null) {
-			return false;
-		} else {
-			return true;
+		try {
+			InsertOneResult ir = priceOpenRepository.insertPriceOpen(priceOpen);
+			
+			if(ir.wasAcknowledged()) {
+				return true; //Insert thành công
+			} else {
+				return false; //Insert thất bại
+			}
+		} catch (Exception e) {
+			return false; //Lỗi hệ thống
 		}
+		
 	}
 }

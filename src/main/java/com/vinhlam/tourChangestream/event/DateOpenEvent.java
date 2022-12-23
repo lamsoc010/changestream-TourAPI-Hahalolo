@@ -117,11 +117,14 @@ public class DateOpenEvent {
 			}
 		} 
 		
-		//4. Thay đổi dateAvailble
+		//4. Thay đổi dateAvailble và không thay đổi status
 		// Check xem status hiện tại là bao nhiêu:
 		//TH1: status = 0 => Không thực hiện gì cả
-		//TH2: status = 1 => Tương tự TH2 của bước 3
-		if(listFieldUpdate.containsKey("dateAvailable")) {
+		//TH2: status = 1 => //Query đến bảng priceTour, check xem với tourId đó thì dateAvailable có nằm trong khoảng được set hay không
+				//TH2.1: Nếu không có priceTour => Delete priceOpen tương ứng(Phải lấy được dateAvailable trước khi update)
+				//TH2.2: Nếu có priceTour => Update priceOpen tương ứng với các trường của priceTour + dateAvailable
+		
+		if(listFieldUpdate.containsKey("dateAvailable") && !listFieldUpdate.containsKey("status")) {
 			int status = listFieldUpdate.getInt32("status").getValue();
 			
 			if(status == 1) {

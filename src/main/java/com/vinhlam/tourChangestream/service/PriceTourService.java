@@ -23,47 +23,25 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.model.Filters;
 import com.vinhlam.tourChangestream.entity.PriceTour;
+import com.vinhlam.tourChangestream.repository.PriceTourRepository;
 
 @Service
 public class PriceTourService {
-//	@Autowired
-//	private PriceTourRepository priceTourRepository;
-	
 	@Autowired
-	private MongoDatabase mongoDatabase;
+	private PriceTourRepository priceTourRepository;
 	
-	private MongoCollection<PriceTour> priceTourCollection;
 	
-	@Autowired
-	public void PriceTourService() {
-		CodecRegistry cRegistry = CodecRegistries.fromRegistries(MongoClientSettings.getDefaultCodecRegistry(), 
-				CodecRegistries.fromProviders(PojoCodecProvider.builder().automatic(true).build()));
-
-		priceTourCollection = mongoDatabase.getCollection("priceTour", PriceTour.class).withCodecRegistry(cRegistry);
-		
-		
-	}
-	
-	public PriceTour getPriceTourByTourId(String id, Date date) throws ParseException {
-		DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-		PriceTour priceTour = new PriceTour();
-		List<Bson> pipeline = new ArrayList<>();
-//		Bson match = Aggregates.match(Filters.eq("tourId", new ObjectId(id)));
-		Bson match = new Document("$match", 
-				new Document("$and", Arrays.asList(
-						new Document("dateApplyStart", new Document("$lte", date )),
-						new Document("dateApplyEnd", new Document("$gte", date )) ) )
-				.append("tourId", new ObjectId(id)));
-		Bson project = new Document("$project", 
-				new Document("tourId", new Document("$toString", "$tourId") )
-				.append("_id", 0)
-				.append("price", 1)
-				.append("currency", 1)
-				.append("dateApplyStart", 1)
-				.append("dateApplyEnd", 1) );
-		pipeline.add(match);
-		pipeline.add(project);
-		priceTour = priceTourCollection.aggregate(pipeline).first();
-		return priceTour;
+//	Get PriceTour by TourId and Filter date
+	public PriceTour getPriceTourByTourId(String id, Date date) {
+		try {
+			PriceTour priceTour = priceTourRepository.getPriceTourByTourId(id, date);
+			if(priceTour == null) { //Ở đây ví dụ sau này nếu null thì trả về mã lỗi hay status chi đó, giờ cứ trả về là null
+				return null; 
+			} else {
+				return priceTour;
+			}
+		} catch (Exception e) {
+			return null; //Lỗi hệ thống
+		}
 	}
 }

@@ -22,43 +22,28 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.vinhlam.tourChangestream.entity.DateOpen;
 import com.vinhlam.tourChangestream.entity.PriceTour;
+import com.vinhlam.tourChangestream.repository.DateOpenRepository;
 
 @Service
 public class DateOpenService {
 	
 	@Autowired
-	private MongoDatabase mongoDatabase;
+	private DateOpenRepository dateOpenRepository;
 	
-	private MongoCollection<DateOpen> dateOpenCollection;
-	
-	@Autowired
-	public void DateOpenService() {
-		CodecRegistry cRegistry = CodecRegistries.fromRegistries(MongoClientSettings.getDefaultCodecRegistry(), 
-				CodecRegistries.fromProviders(PojoCodecProvider.builder().automatic(true).build()));
-
-		dateOpenCollection = mongoDatabase.getCollection("dateOpen", DateOpen.class).withCodecRegistry(cRegistry);
-	}
 
 	public DateOpen getDateOpenByTourId(String tourId, Date dateStart,Date dateEnd) throws ParseException {
-		DateFormat df = new SimpleDateFormat("yyyy-MM-dd");
-		DateOpen dateOpen = new DateOpen();
-		List<Bson> pipeline = new ArrayList<>();
-//		Bson match = Aggregates.match(Filters.eq("tourId", new ObjectId(id)));
-		Bson match = new Document("$match", 
-				new Document("$and", Arrays.asList(
-						new Document("dateAvailable", new Document("$gte", dateStart )),
-						new Document("dateAvailable", new Document("$lte", dateEnd )) ) )
-				.append("tourId", new ObjectId(tourId))
-				.append("status", 1) );
-		Bson project = new Document("$project", 
-				new Document("tourId", new Document("$toString", "$tourId") )
-				.append("_id", 0)
-				.append("dateAvailable", 1)
-				.append("status", 1) );
-		pipeline.add(match);
-		pipeline.add(project);
+		try {
+			DateOpen dateOpen = dateOpenRepository.getDateOpenByTourId(tourId, dateStart, dateEnd);
+			
+			if(dateOpen == null) { //Ở đây ví dụ sau này nếu null thì trả về mã lỗi hay status chi đó, giờ cứ trả về là null
+				return null; 
+			} else {
+				return dateOpen;
+			}
+			
+		} catch (Exception e) {
+			return null; //Lỗi hệ thống
+		}
 		
-		dateOpen = dateOpenCollection.aggregate(pipeline).first();
-		return dateOpen;
 	}
 }
