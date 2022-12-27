@@ -17,6 +17,12 @@ import org.bson.types.ObjectId;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.google.firebase.FirebaseApp;
+import com.google.firebase.messaging.BatchResponse;
+import com.google.firebase.messaging.FirebaseMessaging;
+import com.google.firebase.messaging.FirebaseMessagingException;
+import com.google.firebase.messaging.MulticastMessage;
+import com.google.firebase.messaging.SendResponse;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -34,7 +40,13 @@ public class PriceOpenService {
 
 	@Autowired
 	private PriceOpenRepository priceOpenRepository;
-
+	@Autowired
+	private TokenUserService tokenUserService;
+	
+	private static final String TOPIC= "tour";
+	
+	@Autowired
+	private FirebaseApp firebaseApp;
 	
 	public boolean deletePriceOpenByTourIdAndDateOpen(String tourId, Date date) throws ParseException {
 
@@ -57,6 +69,13 @@ public class PriceOpenService {
 		try {
 			InsertOneResult ir = priceOpenRepository.insertPriceOpen(priceOpen);
 			
+//			Sự kiện nào dẫn đến cái insertPriceOpen này thì không cần biết
+//			Chỉ cần biết là khi nào priceOpen được insert vào db thì gửi thông báo cho client
+			
+//			Get List Token device by Topic 
+			List<String> listToken = tokenUserService.getListTokenByTopic(TOPIC);
+			sendNotificationToAlLUserByTopic(listToken);
+			
 			if(ir.wasAcknowledged()) {
 				return true; //Insert thành công
 			} else {
@@ -66,5 +85,29 @@ public class PriceOpenService {
 			return false; //Lỗi hệ thống
 		}
 		
+	}
+	
+	
+//	function sendNotificationToAlLUserByTopic
+	public void sendNotificationToAlLUserByTopic(List<String> listToken) throws FirebaseMessagingException {
+		List<String> registrationTokens = listToken;
+
+			MulticastMessage message = MulticastMessage.builder()
+			    .addAllTokens(registrationTokens)
+			    .build();
+			BatchResponse response = FirebaseMessaging.getInstance().sendMulticast(message);
+			if (response.getFailureCount() > 0) {
+			  List<SendResponse> responses = response.getResponses();
+			  List<String> failedTokens = new ArrayList<>();
+			  for (int i = 0; i < responses.size(); i++) {
+			    if (!responses.get(i).isSuccessful()) {
+			      // The order of responses corresponds to the order of the registration tokens.
+			      failedTokens.add(registrationTokens.get(i));
+			    }
+			  }
+
+			  System.out.println("List of tokens that caused failures: " + failedTokens);
+			}
+			System.out.println("Successfully sent message: " + response);
 	}
 }

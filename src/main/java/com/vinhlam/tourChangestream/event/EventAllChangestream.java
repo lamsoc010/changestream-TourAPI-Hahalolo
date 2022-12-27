@@ -40,6 +40,7 @@ import com.vinhlam.tourChangestream.entity.PriceOpen;
 import com.vinhlam.tourChangestream.entity.PriceTour;
 import com.vinhlam.tourChangestream.service.PriceOpenService;
 import com.vinhlam.tourChangestream.service.PriceTourService;
+import com.vinhlam.tourChangestream.service.TokenUserService;
 
 @Service
 public class EventAllChangestream {
@@ -51,6 +52,7 @@ public class EventAllChangestream {
 	private DateOpenEvent dateOpenEvent;
 	@Autowired
 	private PriceTourEvent priceTourEvent;
+	
 	
 //	Khai báo các hằng số collection
 	private static final String DATAOPEN_COLLECTION = "dateOpen";
@@ -113,6 +115,7 @@ public class EventAllChangestream {
 			    }
 			    
 			    if(next.getOperationTypeString().equalsIgnoreCase("update")) {
+			    	
 			    	System.out.println("Lắng nghe sự kiện update của collection: " +  PRICETOUR_COLLECTION);
 			    }
 			    
