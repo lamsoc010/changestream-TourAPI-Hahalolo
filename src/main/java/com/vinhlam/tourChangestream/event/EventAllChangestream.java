@@ -9,6 +9,8 @@ import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.net.http.HttpRequest.BodyPublishers;
 
 import org.bson.BsonObjectId;
@@ -63,11 +65,11 @@ public class EventAllChangestream {
 	
 	
 	@Autowired
-	public void DateOpenChangestream() throws JsonMappingException, JsonProcessingException, ParseException {
+	public void DateOpenChangestream() throws JsonMappingException, JsonProcessingException, ParseException, InterruptedException, ExecutionException {
 		changeStream();
 	}
 	
-	public void changeStream() throws JsonMappingException, JsonProcessingException, ParseException {
+	public void changeStream() throws JsonMappingException, JsonProcessingException, ParseException, InterruptedException, ExecutionException {
 //		CodecRegistry pojoCodecRegistry = org.bson.codecs.configuration.CodecRegistries.fromRegistries(
 //				MongoClientSettings.getDefaultCodecRegistry(), org.bson.codecs.configuration.CodecRegistries
 //						.fromProviders(PojoCodecProvider.builder().automatic(true).build()));
@@ -92,38 +94,104 @@ public class EventAllChangestream {
 		while(cursor.hasNext()) { //Lưu ý đây phải để while nó mới chạy bắt nhiều lần được, còn không chạy được 1 làn thôi
 			ChangeStreamDocument<Document> next = cursor.next();
 //			System.err.println(next);
-			//Check xem có phải là collection dateOpen hay không?
-			if(next.getNamespace().getCollectionName().equalsIgnoreCase(DATAOPEN_COLLECTION)) {
-				
-				if(next.getOperationTypeString().equalsIgnoreCase("delete")) {
-			    	System.out.println("Lắng nghe sự kiện delete của collection: " +  DATAOPEN_COLLECTION);
-			    }
-			    
-			    if(next.getOperationTypeString().equalsIgnoreCase("update")) {
-			    	System.out.println("Lắng nghe sự kiện update của collection: " +  DATAOPEN_COLLECTION);
-			    	dateOpenEvent.handleUpdateDateOpen(next);
-			    }
-			    
-			    if(next.getOperationTypeString().equalsIgnoreCase("insert")) {
-			    	System.out.println("Lắng nghe sự kiện insert của collection: " +  DATAOPEN_COLLECTION);
-			    	dateOpenEvent.handleInsertDateOpen(next);
-			    }
-			//Check xem có phải là collection priceTour hay không?
-			} else if(next.getNamespace().getCollectionName().equalsIgnoreCase(PRICETOUR_COLLECTION)) {
-				if(next.getOperationTypeString().equalsIgnoreCase("delete")) {
-					System.out.println("Lắng nghe sự kiện delete của collection: " +  PRICETOUR_COLLECTION);
-			    }
-			    
-			    if(next.getOperationTypeString().equalsIgnoreCase("update")) {
-			    	
-			    	System.out.println("Lắng nghe sự kiện update của collection: " +  PRICETOUR_COLLECTION);
-			    }
-			    
-			    if(next.getOperationTypeString().equalsIgnoreCase("insert")) {
-			    	System.out.println("Lắng nghe sự kiện insert của collection: " +  PRICETOUR_COLLECTION);
-			    	priceTourEvent.handleInsertPriceTour(next);
-			    }
-			}
+//			//Check xem có phải là collection dateOpen hay không?
+//			if(next.getNamespace().getCollectionName().equalsIgnoreCase(DATAOPEN_COLLECTION)) {
+//				
+//				if(next.getOperationTypeString().equalsIgnoreCase("delete")) {
+//			    	System.out.println("Lắng nghe sự kiện delete của collection: " +  DATAOPEN_COLLECTION);
+//			    }
+//			    
+//			    if(next.getOperationTypeString().equalsIgnoreCase("update")) {
+//			    	System.out.println("Lắng nghe sự kiện update của collection: " +  DATAOPEN_COLLECTION);
+//			    	dateOpenEvent.handleUpdateDateOpen(next);
+//			    }
+//			    
+//			    if(next.getOperationTypeString().equalsIgnoreCase("insert")) {
+//			    	System.out.println("Lắng nghe sự kiện insert của collection: " +  DATAOPEN_COLLECTION);
+//			    	dateOpenEvent.handleInsertDateOpen(next);
+//			    }
+//			//Check xem có phải là collection priceTour hay không?
+//			} else if(next.getNamespace().getCollectionName().equalsIgnoreCase(PRICETOUR_COLLECTION)) {
+//				if(next.getOperationTypeString().equalsIgnoreCase("delete")) {
+//					System.out.println("Lắng nghe sự kiện delete của collection: " +  PRICETOUR_COLLECTION);
+//			    }
+//			    
+//			    if(next.getOperationTypeString().equalsIgnoreCase("update")) {
+//			    	
+//			    	System.out.println("Lắng nghe sự kiện update của collection: " +  PRICETOUR_COLLECTION);
+//			    }
+//			    
+//			    if(next.getOperationTypeString().equalsIgnoreCase("insert")) {
+//			    	System.out.println("Lắng nghe sự kiện insert của collection: " +  PRICETOUR_COLLECTION);
+//			    	priceTourEvent.handleInsertPriceTour(next);
+//			    }
+//			}
+			
+			CompletableFuture<Void> futureDateOpen = CompletableFuture.runAsync(() -> {
+//				//Check xem có phải là collection dateOpen hay không?
+				if(next.getNamespace().getCollectionName().equalsIgnoreCase(DATAOPEN_COLLECTION)) {
+					
+					if(next.getOperationTypeString().equalsIgnoreCase("delete")) {
+				    	System.out.println("Lắng nghe sự kiện delete của collection: " +  DATAOPEN_COLLECTION);
+				    }
+				    
+				    if(next.getOperationTypeString().equalsIgnoreCase("update")) {
+				    	System.out.println("Lắng nghe sự kiện update của collection: " +  DATAOPEN_COLLECTION);
+				    	try {
+							dateOpenEvent.handleUpdateDateOpen(next);
+						} catch (ParseException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+				    }
+				    
+				    if(next.getOperationTypeString().equalsIgnoreCase("insert")) {
+				    	System.out.println("Lắng nghe sự kiện insert của collection: " +  DATAOPEN_COLLECTION);
+				    	try {
+							dateOpenEvent.handleInsertDateOpen(next);
+						} catch (JsonProcessingException | ParseException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+				    }
+				}
+			});
+			
+			CompletableFuture<Void> futurePriceOpen = CompletableFuture.runAsync(() -> {
+				//Check xem có phải là collection priceTour hay không?
+				if(next.getNamespace().getCollectionName().equalsIgnoreCase(PRICETOUR_COLLECTION)) {
+					if(next.getOperationTypeString().equalsIgnoreCase("delete")) {
+						System.out.println("Lắng nghe sự kiện delete của collection: " +  PRICETOUR_COLLECTION);
+				    }
+				    
+				    if(next.getOperationTypeString().equalsIgnoreCase("update")) {
+				    	
+				    	System.out.println("Lắng nghe sự kiện update của collection: " +  PRICETOUR_COLLECTION);
+				    }
+				    
+				    if(next.getOperationTypeString().equalsIgnoreCase("insert")) {
+				    	System.out.println("Lắng nghe sự kiện insert của collection: " +  PRICETOUR_COLLECTION);
+				    	try {
+							priceTourEvent.handleInsertPriceTour(next);
+						} catch (JsonProcessingException | ParseException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						}
+				    }
+				}
+			});
+			
+			CompletableFuture<Void> futureAllOf = CompletableFuture.allOf(futureDateOpen, futurePriceOpen);
+			
+			CompletableFuture<String> resutFutureAllOf = futureAllOf.handle((res, ex) -> {
+				if (ex != null) {
+	                System.out.println("Có lỗi khi lắng nghe: " + ex.getMessage());
+	                return "Lỗi!";
+	            }
+	            return "Hoàn thành lắng nghe" ;
+			});
+			
+			System.out.println(resutFutureAllOf.get());
 			
 //		    cursor.close();
 		}
