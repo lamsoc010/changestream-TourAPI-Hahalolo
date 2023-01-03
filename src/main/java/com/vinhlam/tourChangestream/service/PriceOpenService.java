@@ -22,7 +22,11 @@ import com.google.firebase.messaging.BatchResponse;
 import com.google.firebase.messaging.FirebaseMessaging;
 import com.google.firebase.messaging.FirebaseMessagingException;
 import com.google.firebase.messaging.MulticastMessage;
+import com.google.firebase.messaging.Notification;
+import com.google.firebase.messaging.Notification.Builder;
 import com.google.firebase.messaging.SendResponse;
+import com.google.firebase.messaging.WebpushConfig;
+import com.google.firebase.messaging.WebpushNotification;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
@@ -35,6 +39,7 @@ import com.vinhlam.tourChangestream.entity.PriceOpen;
 import com.vinhlam.tourChangestream.repository.PriceOpenRepository;
 
 
+
 @Service
 public class PriceOpenService {
 
@@ -45,8 +50,12 @@ public class PriceOpenService {
 	
 	private static final String TOPIC= "tour";
 	
-	@Autowired
-	private FirebaseApp firebaseApp;
+//	@Autowired
+//	private FirebaseApp firebaseApp;
+	
+	public PriceOpenService() {
+		
+	}
 	
 	public boolean deletePriceOpenByTourIdAndDateOpen(String tourId, Date date) throws ParseException {
 
@@ -92,9 +101,28 @@ public class PriceOpenService {
 	public void sendNotificationToAlLUserByTopic(List<String> listToken) throws FirebaseMessagingException {
 		List<String> registrationTokens = listToken;
 
+			Notification.Builder builder = Notification.builder();
+			try {
+				builder.setTitle("Có sự thay đổi về giá Tour");
+				builder.setBody("Check ngay ở Hahalolo.com bạn nhé!");
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			
+			WebpushConfig.Builder builderWeb = WebpushConfig.builder();
+			builderWeb.putHeader("Header", "Có sự thay đổi về giá Tour!!");
+			builderWeb.putData("Data", "Check ngay ở Hahalolo.com bạn nhé!!");
+			builderWeb.setNotification(new WebpushNotification("Demo header", "Demo body"));
+//			builderWeb.
+//			Notification noti = new Notification(builder.build());
 			MulticastMessage message = MulticastMessage.builder()
 			    .addAllTokens(registrationTokens)
+			    .putData("123", "132")
+			    .setWebpushConfig(builderWeb.build())
+			    .setNotification(builder.build())
 			    .build();
+			
 			BatchResponse response = FirebaseMessaging.getInstance().sendMulticast(message);
 			if (response.getFailureCount() > 0) {
 			  List<SendResponse> responses = response.getResponses();
